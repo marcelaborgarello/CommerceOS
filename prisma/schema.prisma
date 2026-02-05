@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id             String             @id @default(uuid())
+  name           String
+  slug           String             @unique
+  type           String
+  logoUrl        String?
+  address        String?
+  phone          String?
+  settings       Json?              @default("{}")
+  themePrimary   String             @default("#557A2A")
+  themeSecondary String             @default("#F0EDD8")
+  themeAccent    String             @default("#FFDEB8")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  cashAudits     CashAudit[]
+  cashSessions   CashSession[]
+  commitments    Commitment[]
+  expenses       Expense[]
+  reserves       FinancialReserve[]
+  incomes        Income[]
+  products       Product[]
+  providers      Provider[]
+  sales          Sale[]
+  supplies       Supply[]
+  members        UserOrganization[]
+  wastage        WastageRecord[]
+}
+
+model UserOrganization {
+  id             String       @id @default(uuid())
+  userId         String
+  organizationId String
+  role           String       @default("OWNER")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model CashAudit {
+  id             String        @id @default(uuid())
+  date           String
+  createdAt      DateTime      @default(now())
+  data           Json
+  totalSales     Float
+  difference     Float
+  reportUrl      String?
+  notes          String?
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([date])
+  @@index([organizationId])
+}
+
+model Provider {
+  id             String        @id @default(uuid())
+  name           String
+  category       String?
+  phone          String?
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  commitments    Commitment[]
+  expenses       Expense[]
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplies       Supply[]
+
+  @@index([organizationId])
+}
+
+model CashSession {
+  id             String        @id @default(uuid())
+  date           String
+  data           Json?
+  startCash      Float         @default(0)
+  startDigital   Float         @default(0)
+  endCash        Float?
+  endDigital     Float?
+  difference     Float?
+  notes          String?
+  status         String        @default("OPEN")
+  closeDate      DateTime?
+  reportUrl      String?
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  expenses       Expense[]
+  incomes        Income[]
+  sales          Sale[]
+
+  @@index([organizationId])
+}
+
+model Supply {
+  id             String        @id @default(uuid())
+  name           String
+  stock          Float         @default(0)
+  minStock       Float         @default(5)
+  unit           String        @default("u")
+  unitCost       Float         @default(0)
+  lastCost       Float?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  providerId     String?
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider       Provider?     @relation(fields: [providerId], references: [id])
+
+  @@index([organizationId])
+  @@index([providerId])
+}
+
+model Sale {
+  id             String        @id @default(uuid())
+  date           DateTime      @default(now())
+  description    String
+  amount         Float
+  paymentMethod  String
+  fee            Float         @default(0)
+  isCredit       Boolean       @default(false)
+  cashSessionId  String
+  organizationId String?
+  cashSession    CashSession   @relation(fields: [cashSessionId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([cashSessionId])
+  @@index([organizationId])
+}
+
+model Expense {
+  id             String        @id @default(uuid())
+  date           DateTime      @default(now())
+  description    String
+  amount         Float
+  category       String
+  type           String
+  cashSessionId  String
+  providerId     String?
+  organizationId String?
+  cashSession    CashSession   @relation(fields: [cashSessionId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider       Provider?     @relation(fields: [providerId], references: [id])
+
+  @@index([cashSessionId])
+  @@index([organizationId])
+}
+
+model Income {
+  id               String        @id @default(uuid())
+  date             DateTime      @default(now())
+  description      String
+  amount           Float
+  type             String
+  isStartingAmount Boolean       @default(false)
+  cashSessionId    String
+  organizationId   String?
+  cashSession      CashSession   @relation(fields: [cashSessionId], references: [id])
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([cashSessionId])
+  @@index([organizationId])
+}
+
+model Product {
+  id                String            @id @default(uuid())
+  name              String
+  productType       String            @default("SELL")
+  stock             Float             @default(0)
+  minStock          Float             @default(5)
+  unit              String            @default("u")
+  wholesaleCost     Float             @default(0)
+  wholesaleQuantity Float             @default(1)
+  unitCost          Float             @default(0)
+  margin            Float             @default(60)
+  suggestedPrice    Float             @default(0)
+  finalPrice        Float             @default(0)
+  isOnSale          Boolean           @default(false)
+  lastCost          Float?
+  lastPrice         Float?
+  updatedAt         DateTime          @updatedAt
+  organizationId    String?
+  priceHistory      HistoricalPrice[]
+  organization      Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model WastageRecord {
+  id             String        @id @default(uuid())
+  productId      String?
+  productName    String
+  quantity       Float
+  unitCost       Float
+  reason         String        @default("Discard (Wastage)")
+  date           DateTime      @default(now())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model FinancialReserve {
+  id             String        @id @default(uuid())
+  date           DateTime      @default(now())
+  amount         Float
+  description    String
+  type           String        @default("CASH")
+  createdAt      DateTime      @default(now())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Commitment {
+  id             String        @id @default(uuid())
+  description    String
+  amount         Float
+  dueDate        DateTime
+  paymentDate    DateTime?
+  status         String        @default("PENDING")
+  notes          String?
+  providerId     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider       Provider?     @relation(fields: [providerId], references: [id])
+
+  @@index([organizationId])
+  @@index([organizationId, dueDate, status])
+}
+
+model HistoricalPrice {
+  id        Int      @id @default(autoincrement())
+  productId String
+  cost      Float
+  price     Float
+  date      DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
