@@ -3,7 +3,7 @@
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { createGasto } from '@/actions/cashActions';
-import { Commitment } from '@/types';
+import type { Commitment } from '@/types';
 import { Prisma } from '@/generated/prisma/client';
 import { withAuth } from '@/utils/withAuth';
 

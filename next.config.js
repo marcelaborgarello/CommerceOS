@@ -2,7 +2,10 @@
 const nextConfig = {
     reactStrictMode: true,
     compress: true,
-    // output: 'standalone',
+    output: 'standalone', // Disabled due to Windows filename issues (EINVAL with colons)
+    experimental: {
+        optimizePackageImports: ['recharts', 'xlsx'],
+    },
 
     images: {
         remotePatterns: [

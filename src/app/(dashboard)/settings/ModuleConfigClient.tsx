@@ -70,9 +70,16 @@ const moduleConfigs: ModuleConfig[] = [
     },
     {
         key: 'history',
-        label: 'Historial',
-        description: 'Auditoría y registro de cambios',
+        label: 'Historial de Cierres',
+        description: 'Auditoría de arqueos y balances',
         icon: '📜',
+        category: 'management',
+    },
+    {
+        key: 'sales',
+        label: 'Historial de Ventas',
+        description: 'Buscador y registro de comprobantes',
+        icon: '🔎',
         category: 'management',
     },
 ];
@@ -159,8 +166,8 @@ export function ModuleConfigClient({ initialFeatures }: Props) {
                             <div
                                 key={module.key}
                                 className={`glass-panel p-4 transition-all ${features[module.key]
-                                        ? 'border-l-4 border-accent-color'
-                                        : 'opacity-60'
+                                    ? 'border-l-4 border-accent-color'
+                                    : 'opacity-60'
                                     }`}
                             >
                                 <div className="flex items-start justify-between gap-4">
@@ -177,8 +184,8 @@ export function ModuleConfigClient({ initialFeatures }: Props) {
                                         onClick={() => handleToggle(module.key)}
                                         disabled={isPending}
                                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent-color focus:ring-offset-2 focus:ring-offset-brand-dark ${features[module.key]
-                                                ? 'bg-accent-color'
-                                                : 'bg-white/20'
+                                            ? 'bg-accent-color'
+                                            : 'bg-white/20'
                                             } ${isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                     >
                                         <span

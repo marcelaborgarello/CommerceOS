@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ProviderData, saveProvider, deleteProvider, getProviderExpenses } from '@/actions/providerActions';
+import type { ProviderData } from '@/actions/providerActions';
+import { saveProvider, deleteProvider, getProviderExpenses } from '@/actions/providerActions';
 import { useRouter } from 'next/navigation';
 import { Toast } from './Toast';
 import type { ProviderExpense } from '@/types';

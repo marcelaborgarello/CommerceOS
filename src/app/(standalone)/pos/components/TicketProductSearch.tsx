@@ -1,9 +1,8 @@
-
 import { useState, useRef, useEffect } from 'react';
-import type { Product } from '@/types';
+import type { POSProduct } from '@/actions/productActions';
 
 interface TicketProductSearchProps {
-    products: Product[];
+    products: POSProduct[];
     onAddItem: (item: {
         productId: string;
         name: string;
@@ -15,14 +14,23 @@ interface TicketProductSearchProps {
 }
 
 export function TicketProductSearch({ products, onAddItem }: TicketProductSearchProps) {
+    const [inputValue, setInputValue] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<Product[]>([]);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [searchResults, setSearchResults] = useState<POSProduct[]>([]);
+    const [selectedProduct, setSelectedProduct] = useState<POSProduct | null>(null);
     const [quantity, setQuantity] = useState('');
     const [highlightedIndex, setHighlightedIndex] = useState(0);
 
     const searchInputRef = useRef<HTMLInputElement>(null);
     const quantityInputRef = useRef<HTMLInputElement>(null);
+
+    // Debounce effect
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setSearchTerm(inputValue);
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [inputValue]);
 
     // Filter products
     useEffect(() => {
@@ -52,15 +60,15 @@ export function TicketProductSearch({ products, onAddItem }: TicketProductSearch
             }
         } else if (e.key === 'Escape') {
             e.preventDefault();
-            setSearchTerm('');
+            setInputValue('');
             setSearchResults([]);
             setSelectedProduct(null);
         }
     };
 
-    const selectProduct = (product: Product) => {
+    const selectProduct = (product: POSProduct) => {
         setSelectedProduct(product);
-        setSearchTerm(product.name);
+        setInputValue(product.name);
         setSearchResults([]);
         setTimeout(() => quantityInputRef.current?.focus(), 50);
     };
@@ -72,7 +80,7 @@ export function TicketProductSearch({ products, onAddItem }: TicketProductSearch
         } else if (e.key === 'Escape') {
             setSelectedProduct(null);
             setQuantity('');
-            setSearchTerm('');
+            setInputValue('');
             searchInputRef.current?.focus();
         }
     };
@@ -93,7 +101,7 @@ export function TicketProductSearch({ products, onAddItem }: TicketProductSearch
 
         // Reset
         setSelectedProduct(null);
-        setSearchTerm('');
+        setInputValue('');
         setQuantity('');
         searchInputRef.current?.focus();
     };
@@ -108,9 +116,9 @@ export function TicketProductSearch({ products, onAddItem }: TicketProductSearch
                     ref={searchInputRef}
                     className={`input-field text-lg ${selectedProduct ? 'text-green-400 font-bold' : ''}`}
                     placeholder="Escribí para buscar..."
-                    value={searchTerm}
+                    value={inputValue}
                     onChange={e => {
-                        setSearchTerm(e.target.value);
+                        setInputValue(e.target.value);
                         if (selectedProduct) setSelectedProduct(null);
                     }}
                     onKeyDown={handleSearchKeyDown}

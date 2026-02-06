@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Transaction } from '@/types';
+import type { Transaction } from '@/types';
 import { deleteIngreso, updateIngreso } from '@/actions/cashActions';
 
 interface Props {

@@ -2,8 +2,8 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { submitVenta } from '@/actions/formActions';
-import { PaymentMethod, METHODS_WITH_COMMISSION } from '@/types/index';
-import { PAYMENT_METHODS } from '@/types/index';
+import type { PaymentMethod } from '@/types/index';
+import { METHODS_WITH_COMMISSION, PAYMENT_METHODS } from '@/types/index';
 
 interface Props {
     sessionDate: string;

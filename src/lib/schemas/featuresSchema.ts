@@ -20,6 +20,7 @@ export const featuresSchema = z.object({
     providers: z.boolean().default(true),       // Providers/Suppliers
     reports: z.boolean().default(true),         // Reports and analytics
     history: z.boolean().default(true),         // Audit history
+    sales: z.boolean().default(true),           // Sales history
 });
 
 /**
@@ -49,6 +50,7 @@ export const getDefaultFeaturesByType = (businessType: string): Features => {
         providers: true,
         reports: true,
         history: true,
+        sales: true,
     };
 
     switch (businessType) {

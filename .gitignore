@@ -7,12 +7,28 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
+.next/
+out/
+build/
 *.local
 
-# Editor directories and files
+# Prisma generated (una sola vez!)
+/generated/prisma
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -23,26 +39,29 @@ dist-ssr
 *.sln
 *.sw?
 
-/src/generated/prisma
+# AI Assistants cache (ocultos en VSCode, ignorados en Git)
+.adal
+.agent
+.agents
+.augment
+.claude
+.cline
+.windsurf
+.antigravity
+.cursor
+.continue
 
-# Next.js
-.next/
-out/
-
-# Environment
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Build
-build/
+# Build logs
 build_log*.txt
 bun.lock
 
-/src/generated/prisma
+# OPCIONAL: Descomentar si NO querés subir las reglas a GitHub
+.rules
+.cursorrules
+.devin
+skills
+.vscode
 
-/src/generated/prisma
-
-/generated/prisma
+# Prisma
+node_modules/.prisma
+/generated

@@ -20,6 +20,11 @@ export interface ProductData {
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
+import type { Product } from '@/types';
+
+// Optimized Type for POS
+export type POSProduct = Pick<Product, 'id' | 'name' | 'unit' | 'finalPrice' | 'stock'>;
+
 export async function getProducts() {
     try {
         const supabase = await createClient();
@@ -44,6 +49,40 @@ export async function getProducts() {
     } catch (error) {
         console.error('[DB] Error getting products:', error);
         return { success: false, error: 'Ocurrió un error al cargar los productos.' };
+    }
+}
+
+export async function getPOSProducts(): Promise<{ success: boolean; data?: POSProduct[]; error?: string }> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
+        const { getCurrentOrganization } = await import('@/utils/serverContext');
+        const org = await getCurrentOrganization(user);
+
+        if (!org) {
+            return { success: false, error: 'Sin organización' };
+        }
+
+        const products = await prisma.product.findMany({
+            where: { organizationId: org.id },
+            orderBy: { name: 'asc' },
+            select: {
+                id: true,
+                name: true,
+                unit: true,
+                finalPrice: true,
+                stock: true
+            }
+        });
+        return { success: true, data: products };
+    } catch (error) {
+        console.error('[DB] Error getting POS products:', error);
+        return { success: false, error: 'Error al cargar productos para POS.' };
     }
 }
 

@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import prisma from '@/lib/db';
 import { createClient } from './supabase/server';
-import { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
 
 export async function getCurrentOrganization(user: User) {

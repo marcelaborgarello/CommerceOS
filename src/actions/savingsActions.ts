@@ -5,7 +5,7 @@ import { getSession, getLatestSession } from './cashActions';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { getArgentinaDateKey, now } from '@/utils/dateUtils';
-import { ReserveType } from '@/types';
+import type { ReserveType } from '@/types';
 
 // Obtener saldo total de la reserva por tipo
 export async function getReservaBalance(type: ReserveType = 'CASH') {

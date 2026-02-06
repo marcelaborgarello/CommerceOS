@@ -49,6 +49,7 @@ export default async function Home() {
         providers: true,
         reports: true,
         history: true,
+        sales: true,
     };
 
 
@@ -88,9 +89,17 @@ export default async function Home() {
 
                         {features.history && (
                             <Link href="/history" className="glass-panel flex flex-col items-center justify-center text-center p-8 transition-all hover:-translate-y-1 hover:shadow-2xl active:scale-95 hover:border-warning group no-underline">
-                                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">📅</span>
-                                <h3 className="text-xl font-bold mt-2 text-warning">Historial</h3>
-                                <p className="text-secondary text-sm mt-2">Consulta ventas y cierres anteriores.</p>
+                                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">📒</span>
+                                <h3 className="text-xl font-bold mt-2 text-warning">Historial de Cierres</h3>
+                                <p className="text-secondary text-sm mt-2">Historial de arqueos y balances.</p>
+                            </Link>
+                        )}
+
+                        {features.sales && (
+                            <Link href="/sales" className="glass-panel flex flex-col items-center justify-center text-center p-8 transition-all hover:-translate-y-1 hover:shadow-2xl active:scale-95 hover:border-green-400 group no-underline">
+                                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">🔎</span>
+                                <h3 className="text-xl font-bold mt-2 text-green-400">Historial de Ventas</h3>
+                                <p className="text-secondary text-sm mt-2">Buscador global de comprobantes.</p>
                             </Link>
                         )}
 

@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db';
 import { createClient } from '@/utils/supabase/server';
-import { CashRegisterRecord } from '@/types';
+import type { CashRegisterRecord } from '@/types';
 
 
 // 1. SAVE ARQUEO

@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "bunx prisma generate && next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0",
+    "test": "bun test",
     "lint": "next lint",
-    "fix-imports": "bun scripts/fix-imports.mjs"
+    "cleanup-duplicates": "bun scripts/cleanup-duplicates.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
@@ -24,6 +25,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.8",
     "@types/node": "^25.2.0",
     "@types/pg": "^8.16.0",
     "@types/react": "^18.3.27",

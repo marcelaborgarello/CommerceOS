@@ -69,27 +69,8 @@ export async function createSession(date: string, organizationId?: string) {
     revalidatePath('/cash-audit');
 }
 
-// REOPEN SESSION (Emergency Unlock)
-export async function reopenSession(date: string, organizationId?: string) {
-    try {
-        const session = await prisma.cashSession.findFirst({
-            where: { date, organizationId }
-        });
+// REOPEN SESSION (Emergency Unlock) - Removed duplicate
 
-        if (!session) return { success: false, message: 'Sesión no encontrada' };
-
-        await prisma.cashSession.update({
-            where: { id: session.id },
-            data: { status: 'OPEN' }
-        });
-
-        revalidatePath('/cash-audit');
-        return { success: true };
-    } catch (error) {
-        console.error("Error reopening session:", error);
-        return { success: false, message: 'Error al reabrir la caja' };
-    }
-}
 interface CreateSaleDTO {
     description: string;
     amount: number;
@@ -227,17 +208,20 @@ export async function getSession(date: string, organizationId?: string) {
         const dbState: CashRegisterRecord = {
             date: session.date,
             // 1. SALES: Purely from "Sale" table
-            sales: session.sales.map((v) => ({
-                id: v.id,
-                description: v.description,
-                amount: v.amount,
-                paymentMethod: v.paymentMethod as PaymentMethod,
-                isCredit: v.isCredit,
-                date: v.date.toISOString(),
-                // Display Time: Read as UTC to show Argentina Numbers
-                time: v.date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-                commission: v.fee
-            })),
+            // FILTER: Not 'PRESUPUESTO' AND Not 'CANCELED'
+            sales: session.sales
+                .filter(v => (v.type === 'TICKET' || v.type === 'FACTURA_A' || v.type === 'FACTURA_B' || v.type === 'FACTURA_C') && v.status !== 'CANCELED')
+                .map((v) => ({
+                    id: v.id,
+                    description: v.description,
+                    amount: v.amount,
+                    paymentMethod: v.paymentMethod as PaymentMethod,
+                    isCredit: v.isCredit,
+                    date: v.date.toISOString(),
+                    // Display Time: Read as UTC to show Argentina Numbers
+                    time: v.date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                    commission: v.fee
+                })),
             // 2. INCOME: Start from Columns, Other Incomes from "Income" table
             income: {
                 startCash,
@@ -265,7 +249,7 @@ export async function getSession(date: string, organizationId?: string) {
                 realCash: session.endCash ?? (storedState.audit?.realCash ?? 0),
                 realDigital: session.endDigital ?? (storedState.audit?.realDigital ?? 0),
                 notes: session.notes ?? storedState.audit?.notes,
-                closed: session.status === 'CLOSED' ? true : (storedState.audit?.closed || false),
+                closed: session.status === 'CLOSED',
                 closeDate: session.closeDate?.toISOString()
             },
             lastUpdated: session.updatedAt.getTime()
@@ -304,6 +288,7 @@ export async function createVenta(sessionDate: string, sale: CreateSaleDTO, orga
                 cashSessionId: session.id,
                 organizationId: activeOrgId,
                 date: fechaArgentina, // Storing Argentina Time as "UTC Value"
+                type: 'RAPIDA'
             }
         });
 
@@ -328,24 +313,43 @@ export async function createVenta(sessionDate: string, sale: CreateSaleDTO, orga
 export async function deleteVenta(id: string) {
 
     try {
-        const sale = await prisma.sale.findUnique({ where: { id }, include: { cashSession: true } });
-        if (!sale) return { success: true }; // Already deleted
+        const sale = await prisma.sale.findUnique({ where: { id }, include: { cashSession: true, items: true } });
+        if (!sale) return { success: true }; // Already gone
 
         if (sale.cashSession.status === 'CLOSED') {
-            return { success: false, error: 'La caja está cerrada. No se puede eliminar la venta.' };
+            return { success: false, error: 'La caja está cerrada. No se puede anular la venta.' };
         }
 
-        await prisma.sale.delete({ where: { id } });
+        if (sale.status === 'CANCELED') {
+            return { success: true }; // Already canceled
+        }
+
+        // SOFT DELETE (ANULAR) + STOCK RETURN
+        await prisma.$transaction(async (tx) => {
+            // 1. Update Status
+            await tx.sale.update({
+                where: { id },
+                data: { status: 'CANCELED' }
+            });
+
+            // 2. Restore Stock
+            for (const item of sale.items) {
+                if (item.productId) {
+                    await tx.product.update({
+                        where: { id: item.productId },
+                        data: { stock: { increment: item.quantity } }
+                    });
+                }
+            }
+        });
+
         revalidatePath('/cash-audit');
+        revalidatePath('/sales');
+        revalidatePath('/pos');
         return { success: true };
     } catch (error) {
-        if (error instanceof Error && 'code' in error && error.code === 'P2025') {
-            console.warn(`[ServerAction] Sale ID ${id} already deleted (P2025). Syncing UI.`);
-            revalidatePath('/cash-audit');
-            return { success: true };
-        }
-        console.error('Error deleting sale:', error);
-        return { success: false, error: 'Error al eliminar venta' };
+        console.error('Error canceling sale from audit:', error);
+        return { success: false, error: 'Error al anular venta' };
     }
 }
 
@@ -659,9 +663,10 @@ export async function closeSession(date: string, closeData: { realCash: number; 
         const totalOtherIncomes = session.incomes.reduce((acc: number, i) => acc + i.amount, 0);
         const totalIncome = startCash + startDigital + totalOtherIncomes;
 
-        // Sales (Net)
-        const totalSalesGross = session.sales.reduce((acc: number, v) => acc + v.amount, 0);
-        const totalCommissions = session.sales.reduce((acc: number, v) => acc + (v.fee || 0), 0);
+        // Sales (Net) - EXCLUDING CANCELED
+        const validSales = session.sales.filter(v => v.status !== 'CANCELED');
+        const totalSalesGross = validSales.reduce((acc: number, v) => acc + v.amount, 0);
+        const totalCommissions = validSales.reduce((acc: number, v) => acc + (v.fee || 0), 0);
         const totalSalesNet = totalSalesGross - totalCommissions;
 
         // Expenses
@@ -786,37 +791,33 @@ export async function closeSession(date: string, closeData: { realCash: number; 
 }
 
 // Abrir Caja (Reabrir sesión cerrada)
-export async function openSession(date: string, organizationId?: string) {
+// Abrir Caja (Reabrir sesión cerrada)
+export async function reopenSession(date: string, orgId?: string) {
+    console.log('[reopenSession] Attempting to reopen:', { date, orgId });
+    if (!orgId) return { success: false, error: 'Organización requerida' };
+
     try {
-        let orgId = organizationId;
-        if (!orgId) {
-            const cookieStore = await cookies();
-            orgId = cookieStore.get('commerceos_org_id')?.value;
-        }
-        if (!orgId) throw new Error("Org ID required to open session");
-
-        const session = await prisma.cashSession.findFirst({
-            where: {
-                date,
-                organizationId: orgId
-            }
-        });
-
-        if (!session) return { success: false, error: 'Sesión no encontrada' };
-
-        await prisma.cashSession.update({
-            where: { id: session.id },
+        const result = await prisma.cashSession.updateMany({
+            where: { date, organizationId: orgId },
             data: {
                 status: 'OPEN',
-                closeDate: null
+                closeDate: null,
+                difference: null
             }
         });
 
+        console.log('[reopenSession] Update Result:', result);
+
+        if (result.count === 0) {
+            return { success: false, error: 'No se encontró la sesión para reabrir' };
+        }
+
         revalidatePath('/cash-audit');
+        revalidatePath('/pos'); // Revalidate POS to remove the banner
         return { success: true };
     } catch (error) {
         console.error('Error reopening session:', error);
-        return { success: false, error: 'Error al reabrir la caja' };
+        return { success: false, error: 'Error al reabrir' };
     }
 }
 

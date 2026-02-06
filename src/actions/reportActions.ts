@@ -1,7 +1,7 @@
 'use server';
 
 import prisma from '@/lib/db';
-import { CashRegisterRecord, Expense } from '@/types';
+import type { CashRegisterRecord, Expense } from '@/types';
 import { cookies } from 'next/headers';
 
 export interface MonthlyStats {

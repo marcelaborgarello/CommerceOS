@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { updatePassword } from '@/actions/settingsActions';
-import { logout } from '@/actions/authActions';
+import { logout, updatePassword } from '@/actions/authActions';
 
 interface Props {
     userEmail: string;
@@ -64,8 +63,8 @@ export function AccountSettings({ userEmail }: Props) {
                     <form id="password-form" action={handlePasswordChange} className="space-y-4">
                         {message && (
                             <div className={`p-4 rounded-lg ${message.type === 'success'
-                                    ? 'bg-green-500/10 border border-green-500/50 text-green-200'
-                                    : 'bg-red-500/10 border border-red-500/50 text-red-200'
+                                ? 'bg-green-500/10 border border-green-500/50 text-green-200'
+                                : 'bg-red-500/10 border border-red-500/50 text-red-200'
                                 }`}>
                                 {message.text}
                             </div>

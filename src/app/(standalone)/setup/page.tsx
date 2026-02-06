@@ -15,8 +15,8 @@ export default async function SetupPage({
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const isNewMode = searchParams?.new === 'true';
-    const targetOrgId = searchParams?.orgId as string | undefined;
+    const isNewMode = params?.new === 'true';
+    const targetOrgId = params?.orgId as string | undefined;
 
     let initialData = null;
 
@@ -71,8 +71,8 @@ export default async function SetupPage({
 
             <div className="glass-panel w-full max-w-md p-8 relative z-10 border border-white/10 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-8 duration-700">
 
-                {/* Back Link if Editing */}
-                {isEditing && (
+                {/* Back Link */}
+                {user && (
                     <Link href="/" className="absolute top-4 left-4 text-white/50 hover:text-white transition-colors no-underline text-xs flex items-center gap-1">
                         &larr; Volver
                     </Link>
@@ -92,7 +92,7 @@ export default async function SetupPage({
                 </div>
 
                 {/* Form */}
-                <SetupForm initialData={initialData as any} />
+                <SetupForm key={initialData?.id ?? 'new'} initialData={initialData as any} />
 
                 {/* Footer */}
                 <div className="mt-8 flex flex-col gap-4 text-center">

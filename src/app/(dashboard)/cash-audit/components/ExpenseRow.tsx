@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { EXPENSE_CATEGORIES, Expense, Provider } from '@/types/index';
+import { EXPENSE_CATEGORIES } from '@/types/index';
+import type { Expense, Provider } from '@/types/index';
 import { deleteGasto, updateGasto } from '@/actions/cashActions';
 
 interface Props {

@@ -46,28 +46,46 @@ export async function updateSession(request: NextRequest) {
         }
     );
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // Protected Routes Check
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
 
-    // Route Protection Logic
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/auth') &&
-        !request.nextUrl.pathname.startsWith('/api') && // Allow API for now (or protect safely)
-        !request.nextUrl.pathname.startsWith('/_next') &&
-        !request.nextUrl.pathname.startsWith('/static')
-    ) {
-        // Redirect to login if not authenticated
+        // Route Protection Logic
+        if (
+            !user &&
+            !request.nextUrl.pathname.startsWith('/login') &&
+            !request.nextUrl.pathname.startsWith('/auth') &&
+            !request.nextUrl.pathname.startsWith('/api') &&
+            !request.nextUrl.pathname.startsWith('/_next') &&
+            !request.nextUrl.pathname.startsWith('/static')
+        ) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/login';
+            return NextResponse.redirect(url);
+        }
+
+        // Redirect to home if logged in and trying to access login
+        if (user && request.nextUrl.pathname.startsWith('/login')) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/';
+            return NextResponse.redirect(url);
+        }
+    } catch (error) {
+        console.error("❌ Session Error (Middleware):", error);
+
+        // Force logout / Clear cookies to break infinite loops due to corrupted session
         const url = request.nextUrl.clone();
         url.pathname = '/login';
-        return NextResponse.redirect(url);
-    }
+        response = NextResponse.redirect(url);
 
-    // Redirect to home if logged in and trying to access login
-    if (user && request.nextUrl.pathname.startsWith('/login')) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/';
-        return NextResponse.redirect(url);
+        // Clean up Supabase cookies
+        request.cookies.getAll().forEach(cookie => {
+            if (cookie.name.startsWith('sb-')) {
+                response.cookies.delete(cookie.name);
+            }
+        });
+
+        return response;
     }
 
     return response;

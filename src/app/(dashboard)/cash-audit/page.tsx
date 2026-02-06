@@ -10,8 +10,9 @@ import { ExpenseList } from './components/ExpenseList';
 import { IncomeForm } from './components/IncomeForm';
 import { IncomeList } from './components/IncomeList';
 import { InitialBalance } from './components/InitialBalance';
+import { ReopenSessionButton } from './components/ReopenSessionButton';
 
-import { CashRegisterRecord, Provider } from '@/types';
+import type { CashRegisterRecord, Provider } from '@/types';
 import { createClient } from '@/utils/supabase/server';
 import { getCurrentOrganization } from '@/utils/serverContext';
 import { redirect } from 'next/navigation';
@@ -164,17 +165,7 @@ export default async function ArqueoPage() {
                             </div>
 
                             {/* REOPEN BUTTON */}
-                            <form action={async () => {
-                                'use server';
-                                await import('@/actions/cashActions').then(mod => mod.reopenSession(initialData!.date, org.id));
-                            }}>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-red-500 hover:bg-red-400 text-white font-bold uppercase text-xs tracking-wider rounded-lg shadow-lg hover:shadow-red-500/20 transition-all flex items-center gap-2"
-                                >
-                                    🔓 Reopen Session
-                                </button>
-                            </form>
+                            <ReopenSessionButton date={initialData.date} organizationId={org.id} />
                         </div>
                     )}
 

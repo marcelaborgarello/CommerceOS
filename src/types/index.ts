@@ -1,14 +1,30 @@
 export type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'QR' | 'DEBITO' | 'CREDITO';
 
+export type SaleType = 'TICKET' | 'PRESUPUESTO' | 'FACTURA_A' | 'FACTURA_B' | 'FACTURA_C' | 'RAPIDA';
+
+export interface SaleItem {
+  id: string;
+  saleId: string;
+  productId?: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
 export interface Sale {
   id: string;
+  type?: SaleType;
+  pointOfSale?: number;
+  number?: number;
   amount: number;
   date: string; // ISO string
-  time: string; // HH:mm
+  time?: string; // HH:mm (Legacy or derived)
   paymentMethod: PaymentMethod;
-  commission?: number; // Only for QR, debit, credit
+  commission?: number;
   description?: string;
   isCredit?: boolean;
+  items?: SaleItem[];
 }
 
 export type ExpenseCategory = 'Negocio' | 'Compras/Fletes' | 'Personal' | 'Pagos/Inversiones' | 'Otros';
@@ -73,6 +89,7 @@ export interface OrganizationSettings {
     providers?: boolean;       // Providers/Suppliers
     reports?: boolean;         // Reports and analytics
     history?: boolean;         // Audit history
+    sales?: boolean;           // Sales history
   };
   terminology?: {
     product?: string;

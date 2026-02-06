@@ -1,4 +1,4 @@
-import { Expense, Provider } from '@/types';
+import type { Expense, Provider } from '@/types';
 import { ExpenseRow } from './ExpenseRow';
 
 interface Props {

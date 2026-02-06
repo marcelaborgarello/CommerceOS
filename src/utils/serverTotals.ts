@@ -1,4 +1,4 @@
-import { CashRegisterRecord } from '@/types';
+import type { CashRegisterRecord } from '@/types';
 
 export function calculateTotals(data: CashRegisterRecord) {
     // 1. Ingresos

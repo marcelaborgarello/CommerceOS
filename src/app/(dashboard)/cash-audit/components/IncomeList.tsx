@@ -1,4 +1,4 @@
-import { Transaction } from '@/types';
+import type { Transaction } from '@/types';
 import { IncomeRow } from './IncomeRow';
 
 interface Props {

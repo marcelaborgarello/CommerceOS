@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db';
 import { withAuth } from '@/utils/withAuth'; // El guardia que creamos recién
-import { Provider, CashSessionData, ProviderExpense } from '@/types';
+import type { Provider, CashSessionData, ProviderExpense } from '@/types';
 import { Prisma } from '@/generated/prisma/client';
 
 export type ProviderData = {

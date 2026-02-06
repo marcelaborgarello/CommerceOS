@@ -53,6 +53,7 @@ export default async function SettingsPage() {
                         initialFeatures={currentFeatures}
                         organizationData={organizationData}
                         userEmail={user.email || ''}
+                        organizationId={org.id}
                     />
                 </div>
             </div>

@@ -136,3 +136,32 @@ export async function loginWithGoogle() {
   // Fallback if no URL returned
   redirect('/login?error=Error inesperado con Google OAuth');
 }
+
+export async function updatePassword(formData: FormData) {
+  const supabase = await createClient();
+  const newPassword = formData.get('newPassword') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (!newPassword || newPassword.length < 6) {
+    return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { success: false, error: 'Las contraseñas no coinciden' };
+  }
+
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath('/settings');
+    return { success: true, message: 'Contraseña actualizada correctamente' };
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al actualizar contraseña' };
+  }
+}

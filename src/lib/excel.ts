@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
-import { CashRegisterRecord, PAYMENT_METHODS } from '@/types';
+import type { CashRegisterRecord } from '@/types';
+import { PAYMENT_METHODS } from '@/types';
 
 export const generateArqueoExcel = (data: CashRegisterRecord, totalVentas: number, diferencia: number): Buffer => {
     const wb = XLSX.utils.book_new();

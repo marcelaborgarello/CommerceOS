@@ -1,236 +1,135 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db';
-import { createClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
+import type { SaleType } from '@/types';
+import type { Features } from '@/lib/schemas/featuresSchema';
 import { getCurrentOrganization } from '@/utils/serverContext';
-import { validateFeatures, type Features } from '@/lib/schemas/featuresSchema';
-import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
 
-/**
- * Update organization features
- * Validates input with Zod before saving
- */
-export async function updateFeatures(features: unknown) {
+export async function getDocumentSequences(organizationId: string) {
     try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const sequences = await prisma.documentSequence.findMany({
+            where: { organizationId },
+            orderBy: [{ type: 'asc' }, { pointOfSale: 'asc' }]
+        });
+        return { success: true, data: sequences };
+    } catch (error) {
+        return { success: false, error: 'Error al obtener secuencias' };
+    }
+}
 
-        if (!user) {
-            return { success: false, error: 'No autenticado' };
-        }
-
-        const org = await getCurrentOrganization(user);
-        if (!org) {
-            return { success: false, error: 'Organización no encontrada' };
-        }
-
-        // Validate features with Zod
-        const validatedFeatures = validateFeatures(features);
-
-        // Get current settings
-        const currentSettings = org.settings as any || {};
-
-        // Update only features, preserve other settings
-        const updatedSettings = {
-            ...currentSettings,
-            features: validatedFeatures,
-        };
-
-        // Save to database
-        await prisma.organization.update({
-            where: { id: org.id },
-            data: {
-                settings: updatedSettings,
+export async function updateDocumentSequence(
+    organizationId: string,
+    type: SaleType,
+    pointOfSale: number,
+    newNumber: number
+) {
+    try {
+        await prisma.documentSequence.upsert({
+            where: {
+                organizationId_type_pointOfSale: {
+                    organizationId,
+                    type,
+                    pointOfSale
+                }
             },
+            update: { currentNumber: newNumber },
+            create: {
+                organizationId,
+                type,
+                pointOfSale,
+                currentNumber: newNumber
+            }
         });
 
-        // Revalidate all pages to reflect changes
+        revalidatePath('/settings');
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: 'Error al actualizar secuencia' }
+    }
+}
+
+// ... (existing imports)
+
+// ... (existing imports)
+
+export async function updateFeatures(features: Features) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Usuario no autenticado' };
+    }
+
+    const org = await getCurrentOrganization(user);
+    if (!org) {
+        return { success: false, error: 'Organización no encontrada' };
+    }
+
+    const organizationId = org.id;
+
+    try {
+        // Fetch current settings again just to be safe or use what we got?
+        // We can just use the DB call to be atomic or simpler
+        // Actually getCurrentOrganization returns the org with settings usually if configured? 
+        // Let's keep the findUnique to be sure we have the latest before merging, 
+        // OR just trust the merge.
+
+        // Let's stick to the pattern:
+        const currentSettings = (org.settings as any) || {};
+
+        await prisma.organization.update({
+            where: { id: organizationId },
+            data: {
+                settings: {
+                    ...currentSettings,
+                    features: features
+                }
+            }
+        });
+
+
+
+        revalidatePath('/settings');
         revalidatePath('/', 'layout');
-
-        return {
-            success: true,
-            message: 'Configuración actualizada correctamente'
-        };
-
+        return { success: true, message: 'Módulos actualizados correctamente' };
     } catch (error) {
         console.error('Error updating features:', error);
-
-        if (error instanceof Error) {
-            return {
-                success: false,
-                error: `Error de validación: ${error.message}`
-            };
-        }
-
-        return {
-            success: false,
-            error: 'Error al actualizar la configuración'
-        };
+        return { success: false, error: 'Error al actualizar configuración' };
     }
 }
 
-/**
- * Get current organization features
- */
-export async function getFeatures(): Promise<Features | null> {
-    try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            redirect('/login');
-        }
-
-        const org = await getCurrentOrganization(user);
-        if (!org) {
-            redirect('/setup');
-        }
-
-        const settings = org.settings as any || {};
-        return settings.features || null;
-
-    } catch (error) {
-        console.error('Error getting features:', error);
-        return null;
-    }
-}
-
-/**
- * Update user password
- */
-export async function updatePassword(formData: FormData) {
-    try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return { success: false, error: 'No autenticado' };
-        }
-
-        const newPassword = formData.get('newPassword') as string;
-        const confirmPassword = formData.get('confirmPassword') as string;
-
-        // Validation
-        if (!newPassword || !confirmPassword) {
-            return { success: false, error: 'Por favor completá todos los campos' };
-        }
-
-        if (newPassword.length < 6) {
-            return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' };
-        }
-
-        if (newPassword !== confirmPassword) {
-            return { success: false, error: 'Las contraseñas no coinciden' };
-        }
-
-        // Update password in Supabase
-        const { error } = await supabase.auth.updateUser({
-            password: newPassword,
-        });
-
-        if (error) {
-            console.error('Password update error:', error);
-            return { success: false, error: 'Error al actualizar la contraseña' };
-        }
-
-        return {
-            success: true,
-            message: '¡Contraseña actualizada correctamente!'
-        };
-
-    } catch (error) {
-        console.error('Error updating password:', error);
-        return {
-            success: false,
-            error: 'Error inesperado al actualizar la contraseña'
-        };
-    }
-}
-
-/**
- * Update business data (name, type, address, phone, logo)
- */
 export async function updateBusinessData(formData: FormData) {
+    const cookieStore = await cookies();
+    const organizationId = cookieStore.get('commerceos_org_id')?.value;
+
+    if (!organizationId) {
+        return { success: false, error: 'Organización no encontrada' };
+    }
+
+    const name = formData.get('name') as string;
+    const type = formData.get('type') as string;
+    const address = formData.get('address') as string;
+    const phone = formData.get('phone') as string;
+
     try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return { success: false, error: 'No autenticado' };
-        }
-
-        const org = await getCurrentOrganization(user);
-        if (!org) {
-            return { success: false, error: 'Organización no encontrada' };
-        }
-
-        const name = formData.get('name') as string;
-        const type = formData.get('type') as string;
-        const address = formData.get('address') as string;
-        const phone = formData.get('phone') as string;
-        const logoFile = formData.get('logo') as File | null;
-
-        // Validation
-        if (!name || !type) {
-            return { success: false, error: 'Nombre y rubro son obligatorios' };
-        }
-
-        let logoUrl = org.logoUrl;
-
-        // Handle logo upload if provided
-        if (logoFile && logoFile.size > 0) {
-            // Generate unique filename
-            const fileExt = logoFile.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-            const filePath = `${fileName}`;
-
-            // Upload to Supabase Storage
-            const { error: uploadError } = await supabase.storage
-                .from('logos')
-                .upload(filePath, logoFile, {
-                    cacheControl: '3600',
-                    upsert: false,
-                });
-
-            if (uploadError) {
-                console.error('Logo upload error:', uploadError);
-                return { success: false, error: 'Error al subir el logo' };
-            }
-
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('logos')
-                .getPublicUrl(filePath);
-
-            logoUrl = publicUrl;
-        }
-
-        // Update organization in database
         await prisma.organization.update({
-            where: { id: org.id },
+            where: { id: organizationId },
             data: {
                 name,
                 type,
-                address: address || null,
-                phone: phone || null,
-                logoUrl,
-            },
+                address,
+                phone
+            }
         });
 
-        // Revalidate to reflect changes
+        revalidatePath('/settings');
         revalidatePath('/', 'layout');
-
-        return {
-            success: true,
-            message: '¡Datos del negocio actualizados correctamente!'
-        };
-
+        return { success: true, message: 'Datos actualizados correctamente' };
     } catch (error) {
         console.error('Error updating business data:', error);
-        return {
-            success: false,
-            error: 'Error inesperado al actualizar los datos'
-        };
+        return { success: false, error: 'Error al actualizar datos' };
     }
 }

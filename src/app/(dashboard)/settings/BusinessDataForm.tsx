@@ -54,8 +54,8 @@ export function BusinessDataForm({ organizationData }: Props) {
 
             {message && (
                 <div className={`mb-6 p-4 rounded-lg ${message.type === 'success'
-                        ? 'bg-green-500/10 border border-green-500/50 text-green-200'
-                        : 'bg-red-500/10 border border-red-500/50 text-red-200'
+                    ? 'bg-green-500/10 border border-green-500/50 text-green-200'
+                    : 'bg-red-500/10 border border-red-500/50 text-red-200'
                     }`}>
                     {message.text}
                 </div>

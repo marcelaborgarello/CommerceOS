@@ -30,6 +30,7 @@ model Organization {
   products       Product[]
   providers      Provider[]
   sales          Sale[]
+  documentSequences DocumentSequence[]
   supplies       Supply[]
   members        UserOrganization[]
   wastage        WastageRecord[]
@@ -120,21 +121,78 @@ model Supply {
   @@index([providerId])
 }
 
+enum SaleType {
+  TICKET
+  PRESUPUESTO
+  FACTURA_A
+  FACTURA_B
+  FACTURA_C
+  RAPIDA
+}
+
+model DocumentSequence {
+  id             String       @id @default(uuid())
+  type           SaleType
+  pointOfSale    Int          @default(1)
+  currentNumber  Int          @default(0)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, type, pointOfSale])
+  @@index([organizationId])
+}
+
+enum SaleStatus {
+  COMPLETED
+  CANCELED
+}
+
 model Sale {
-  id             String        @id @default(uuid())
-  date           DateTime      @default(now())
-  description    String
-  amount         Float
-  paymentMethod  String
-  fee            Float         @default(0)
-  isCredit       Boolean       @default(false)
-  cashSessionId  String
-  organizationId String?
-  cashSession    CashSession   @relation(fields: [cashSessionId], references: [id])
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id                String       @id @default(uuid())
+  date              DateTime     @default(now())
+  type              SaleType     @default(TICKET)
+  status            SaleStatus   @default(COMPLETED)
+  pointOfSale       Int          @default(1)
+  number            Int          @default(0) // Will be assigned via transaction
+  description       String
+  amount            Float
+  paymentMethod     String
+  fee               Float        @default(0)
+  isCredit          Boolean      @default(false)
+  
+  // ARCA / AFIP Fields
+  cae               String?
+  caeVto            DateTime?
+  afipQrData        String?
+  customerDocType   String?      // CUIT, DNI, etc.
+  customerDocNumber String?
+  customerName      String?
+  customerPhone     String?
+
+  cashSessionId     String
+  organizationId    String?
+  cashSession       CashSession  @relation(fields: [cashSessionId], references: [id])
+  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items             SaleItem[]
 
   @@index([cashSessionId])
   @@index([organizationId])
+  @@index([type, pointOfSale, number])
+}
+
+model SaleItem {
+  id             String    @id @default(uuid())
+  saleId         String
+  sale           Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId      String?
+  product        Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName    String
+  quantity       Float
+  unitPrice      Float
+  subtotal       Float
+  
+  @@index([saleId])
+  @@index([productId])
 }
 
 model Expense {
@@ -190,6 +248,7 @@ model Product {
   updatedAt         DateTime          @updatedAt
   organizationId    String?
   priceHistory      HistoricalPrice[]
+  saleItems         SaleItem[]
   organization      Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])

@@ -20,6 +20,8 @@ const tabs: Tab[] = [
     { id: 'tickets', label: 'Tickets', icon: '🧾' },
 ];
 
+import { DocumentSettings } from './components/DocumentSettings';
+
 interface Props {
     initialFeatures: Features;
     organizationData: {
@@ -33,9 +35,10 @@ interface Props {
         themeAccent: string;
     };
     userEmail: string;
+    organizationId: string;
 }
 
-export function SettingsClient({ initialFeatures, organizationData, userEmail }: Props) {
+export function SettingsClient({ initialFeatures, organizationData, userEmail, organizationId }: Props) {
     const [activeTab, setActiveTab] = useState('account');
 
     return (
@@ -124,14 +127,12 @@ export function SettingsClient({ initialFeatures, organizationData, userEmail }:
                 )}
 
                 {activeTab === 'tickets' && (
-                    <div className="glass-panel p-6">
-                        <h2 className="text-xl font-bold text-white mb-4">Configuración de Tickets</h2>
-                        <p className="text-secondary mb-6">Personaliza cómo se imprimen tus tickets de venta</p>
+                    <div className="space-y-6">
+                        <DocumentSettings organizationId={organizationId} />
 
-                        <div className="p-4 bg-blue-500/10 border border-blue-500/50 rounded-lg">
-                            <p className="text-sm text-blue-200">
-                                💡 <strong>Próximamente:</strong> Configuración de impresora, formato de ticket, datos a mostrar, etc.
-                            </p>
+                        <div className="glass-panel p-6">
+                            <h2 className="text-xl font-bold text-white mb-4">Configuración de Impresión</h2>
+                            <p className="text-secondary text-sm">Próximamente opciones de impresora térmica.</p>
                         </div>
                     </div>
                 )}

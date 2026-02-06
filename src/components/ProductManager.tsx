@@ -241,14 +241,16 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                         <thead>
                             <tr className="border-b border-white/10 bg-white/5 text-xs uppercase text-secondary">
                                 <th className="p-4 font-semibold">Producto</th>
-                                <th className="p-4 font-semibold text-right text-green">{defaultType === 'SUPPLY' ? 'Stock Actual' : 'Precio Final'}</th>
+                                {/* Add Stock Column for ALL types, hidden on print */}
+                                <th className="p-4 font-semibold text-center hidden md:table-cell print:hidden">Stock</th>
+                                <th className="p-4 font-semibold text-right text-green">{defaultType === 'SUPPLY' ? 'Costo/Unidad' : 'Precio Final'}</th>
                                 <th className="p-4 font-semibold text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-sm">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={3} className="p-8 text-center text-secondary">Cargando...</td>
+                                    <td colSpan={4} className="p-8 text-center text-secondary">Cargando...</td>
                                 </tr>
                             ) : filteredProducts.map(p => (
                                 <tr key={p.id} className="hover:bg-white/5 transition-colors group" style={(defaultType !== 'SUPPLY' && p.finalPrice <= 0) ? { opacity: 0.5, filter: 'grayscale(100%)' } : {}}>
@@ -259,16 +261,25 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                                         </div>
                                         <div className="text-secondary text-xs">{p.unit}</div>
                                     </td>
+
+                                    {/* STOCK COLUMN */}
+                                    <td className="p-4 text-center hidden md:table-cell print:hidden">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${(p.stock || 0) > (p.minStock || 0)
+                                                ? 'bg-green-900/40 text-green-400 border border-green-700/50'
+                                                : (p.stock || 0) === 0
+                                                    ? 'bg-yellow-900/40 text-yellow-400 border border-yellow-700/50'
+                                                    : 'bg-red-900/40 text-red-400 border border-red-700/50'
+                                            }`}>
+                                            {p.stock || 0} {p.unit}
+                                        </span>
+                                    </td>
+
                                     <td className="p-4 text-right">
                                         {defaultType === 'SUPPLY' ? (
-                                            <div className="flex flex-col items-end">
-                                                <span className={`text-lg font-bold ${(p.stock || 0) > (p.minStock || 0) ? 'text-blue-400' : 'text-red'}`}>
-                                                    {p.stock || 0} {p.unit}
-                                                </span>
-                                                {(p.stock || 0) <= (p.minStock || 0) && (
-                                                    <span className="text-[10px] bg-red/20 text-red px-1 rounded uppercase font-bold">Bajo Stock</span>
-                                                )}
-                                            </div>
+                                            /* ... existing SUPPLY logic ... */
+                                            <span className="text-lg font-bold text-white">
+                                                ${(p.unitCost || (p.wholesaleCost / (p.wholesaleQuantity || 1))).toLocaleString('es-AR', { maximumFractionDigits: 2 })}
+                                            </span>
                                         ) : (
                                             p.finalPrice > 0 ? (
                                                 <span className="text-lg font-bold text-green">
