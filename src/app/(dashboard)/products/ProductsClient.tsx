@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ProductManager } from '@/components/ProductManager';
 import { PriceListPrint } from '@/components/PriceListPrint';
 import { MermaDashboard } from '@/components/MermaDashboard';
 import { getProducts } from '@/actions/productActions';
-import type { Product, Organization } from '@/types';
+import type { Product } from '@/types';
 
 interface Props {
     organization?: {
@@ -26,7 +26,7 @@ interface Props {
 
 }
 
-export function ProductsClient({ organization, userEmail, features = { mermas: true, stock: true, supplies: false }, terminology = { product: 'Producto' }, initialProducts }: Props) {
+export function ProductsClient({ features = { mermas: true, stock: true, supplies: false }, terminology = { product: 'Producto' }, initialProducts }: Props) {
     // We keep state for "optimistic updates" (instantly showing changes), but init it with Server Data
     const [productsList, setProductsList] = useState<Product[]>(initialProducts);
 

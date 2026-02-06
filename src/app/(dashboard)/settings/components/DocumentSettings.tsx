@@ -70,7 +70,6 @@ export function DocumentSettings({ organizationId }: { organizationId: string })
     // But the user WANTS to configure it BEFORE selling.
     // So we should probably list the expected types and allow "initializing" them.
 
-    const EXPECTED_TYPES: SaleType[] = ['TICKET', 'PRESUPUESTO', 'FACTURA_B'];
 
     return (
         <div className="bg-white/5 rounded-xl border border-white/10 p-6">

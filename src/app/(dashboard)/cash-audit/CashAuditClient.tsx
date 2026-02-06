@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Closing } from '@/components/Closing';
 import type { CashRegisterRecord } from '@/types';
 import { closeSession } from '@/actions/cashActions';
@@ -14,7 +13,6 @@ interface CashAuditClientProps {
 }
 
 export default function CashAuditClient({ initialData, theoreticalTotal, organizationId }: CashAuditClientProps) {
-    const router = useRouter();
     const [localData, setLocalData] = useState<CashRegisterRecord>(initialData);
     const [isPending, startTransition] = useTransition();
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useTransition, type ChangeEvent } from 'react';
 import Image from 'next/image';
 import { uploadLogo } from '@/actions/organizationActions';
 
@@ -10,40 +10,36 @@ interface ImageUploaderProps {
 }
 
 export const ImageUploader = ({ currentUrl, onUploadComplete }: ImageUploaderProps) => {
-    const [uploading, setUploading] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const [preview, setPreview] = useState<string | null>(currentUrl || null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         setErrorMsg(null);
-        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-        const file = e.target.files[0];
-        setUploading(true);
+        startTransition(async () => {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
 
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
+                const result = await uploadLogo(formData);
 
-            const result = await uploadLogo(formData);
+                if (!result.success || !result.url) {
+                    throw new Error(result.error || 'Error al subir imagen');
+                }
 
-            if (!result.success || !result.url) {
-                throw new Error(result.error || 'Error al subir imagen');
+                setPreview(result.url);
+                onUploadComplete(result.url);
+
+            } catch (error) {
+                console.error("❌ Upload error:", error);
+                const message = error instanceof Error ? error.message : 'Error al subir imagen. Revisa permisos.';
+                setErrorMsg(message);
             }
-
-
-            setPreview(result.url);
-            onUploadComplete(result.url);
-
-        } catch (error) {
-            console.error("❌ Upload error:", error);
-            const message = error instanceof Error ? error.message : 'Error al subir imagen. Revisa permisos.';
-            setErrorMsg(message);
-            // Allow user to try again
-        } finally {
-            setUploading(false);
-        }
+        });
     };
 
     return (
@@ -74,7 +70,7 @@ export const ImageUploader = ({ currentUrl, onUploadComplete }: ImageUploaderPro
                         <span className="text-4xl opacity-20">🏢</span>
                     )}
 
-                    {uploading && (
+                    {isPending && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                             <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         </div>
@@ -86,10 +82,10 @@ export const ImageUploader = ({ currentUrl, onUploadComplete }: ImageUploaderPro
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
+                        disabled={isPending}
                         className="btn-secondary text-sm py-2 px-4 shadow-lg active:scale-95 transition-transform"
                     >
-                        {uploading ? 'Subiendo...' : '📷 Subir Logo'}
+                        {isPending ? 'Subiendo...' : '📷 Subir Logo'}
                     </button>
                     <p className="text-secondary text-xs max-w-[200px]">
                         Recomendado: 200x200px. PNG o JPG.

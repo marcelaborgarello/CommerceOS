@@ -1,0 +1,25 @@
+//PROHIBIDO TOCAR ESTE ARCHIVO
+// .eslintrc.json
+{
+    "extends": "next/core-web-vitals",
+    "rules": {
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            { // ← "warn" en vez de "error"
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ],
+        "no-console": [
+            "warn",
+            {
+                "allow": [
+                    "warn",
+                    "error"
+                ]
+            }
+        ],
+        "prefer-const": "error",
+        "no-var": "error"
+    }
+}

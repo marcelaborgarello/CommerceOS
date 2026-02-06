@@ -2,7 +2,7 @@
 
 import './ticket.css';
 import './ticket.css';
-import { useState, useOptimistic, useTransition, useEffect } from 'react';
+import { useState, useOptimistic, useTransition } from 'react';
 import { Header } from '@/components/Header';
 import type { POSProduct } from '@/actions/productActions';
 import { useTicket } from './hooks/useTicket';
@@ -92,44 +92,50 @@ export function TicketClient({ organization, userEmail, initialProducts = [], in
 
         setNotification({ type: 'success', message: 'Generando presupuesto...' });
 
-        const res = await createSale({
-            items: items.map(i => ({
-                productId: i.productId,
-                quantity: i.quantity,
-                unitPrice: i.unitPrice,
-                subtotal: i.subtotal,
-                name: i.name
-            })),
-            paymentMethod: 'EFECTIVO', // Presupuestos don't really have ID, defaulting to cash/generic
-            total,
-            customerName: clientName,
-            customerAddress: address,
-            customerPhone: phone,
-            type: 'PRESUPUESTO',
-            pointOfSale: 1
-        }, organization.id);
+        startTransition(async () => {
+            const res = await createSale({
+                items: items.map(i => ({
+                    productId: i.productId,
+                    quantity: i.quantity,
+                    unitPrice: i.unitPrice,
+                    subtotal: i.subtotal,
+                    name: i.name
+                })),
+                paymentMethod: 'EFECTIVO', // Presupuestos don't really have ID, defaulting to cash/generic
+                total,
+                customerName: clientName,
+                customerAddress: address,
+                customerPhone: phone,
+                type: 'PRESUPUESTO',
+                pointOfSale: 1
+            }, organization.id);
 
-        if (res.success && res.number) {
-            setLastSale({ number: res.number, type: 'PRESUPUESTO' });
-            setNotification({ type: 'success', message: `Presupuesto Nº ${res.number} generado!` });
-            setTimeout(() => {
-                window.print();
-
-                // Optional: Clear after print, or keep it visible?
-                // Usually clear.
+            if (res.success && res.number) {
+                setLastSale({ number: res.number, type: 'PRESUPUESTO' });
+                setNotification({ type: 'success', message: `Presupuesto Nº ${res.number} generado!` });
                 setTimeout(() => {
-                    clearTicket();
-                    setLastSale(null);
-                    setNotification(null);
-                }, 1000); // Wait for print dialog
-            }, 500); // Wait for state update
-        } else {
-            setNotification({ type: 'error', message: res.error || 'Error' });
-        }
+                    window.print();
+
+                    // Optional: Clear after print, or keep it visible?
+                    // Usually clear.
+                    setTimeout(() => {
+                        clearTicket();
+                        setLastSale(null);
+                        setNotification(null);
+                    }, 1000); // Wait for print dialog
+                }, 1000); // Wait for state update
+            } else {
+                setNotification({ type: 'error', message: res.error || 'Error' });
+                // Use setSessionClosed if error indicates closure
+                if (res.error && res.error.toLowerCase().includes('cerrada')) {
+                    setSessionClosed(true);
+                }
+            }
+        });
     };
 
     const handleCheckout = async (paymentMethod: PaymentMethod, discount: number, surcharge: number) => {
-        if (initialSessionStatus !== 'OPEN') {
+        if (sessionClosed) {
             setNotification({ type: 'error', message: 'CAJA CERRADA. Abra la caja antes de cobrar.' });
             return;
         }
@@ -140,47 +146,54 @@ export function TicketClient({ organization, userEmail, initialProducts = [], in
         setNotification({ type: 'success', message: 'Procesando venta...' });
         setLastSale(null); // Reset
 
-        const res = await createSale({
-            items: items.map(i => ({
-                productId: i.productId,
-                quantity: i.quantity,
-                unitPrice: i.unitPrice,
-                subtotal: i.subtotal,
-                name: i.name
-            })),
-            paymentMethod,
-            discount,
-            surcharge,
-            total: finalTotal,
-            customerName: clientName,
-            customerAddress: address,
-            customerPhone: phone,
-            type: 'TICKET',
-            pointOfSale: 1
-        }, organization.id);
-
-        if (res.success && res.number) {
-            setLastSale({
-                number: res.number,
-                type: 'TICKET',
+        startTransition(async () => {
+            const res = await createSale({
+                items: items.map(i => ({
+                    productId: i.productId,
+                    quantity: i.quantity,
+                    unitPrice: i.unitPrice,
+                    subtotal: i.subtotal,
+                    name: i.name
+                })),
+                paymentMethod,
+                discount,
+                surcharge,
                 total: finalTotal,
-                discount: discount,
-                surcharge: surcharge
-            });
-            setNotification({ type: 'success', message: `¡Venta registrada! Ticket #${res.number}` });
+                customerName: clientName,
+                customerAddress: address,
+                customerPhone: phone,
+                type: saleType,
+                pointOfSale: 1
+            }, organization.id);
 
-            setTimeout(() => {
-                window.print();
+            if (res.success && res.number) {
+                setLastSale({
+                    number: res.number,
+                    type: saleType,
+                    total: finalTotal,
+                    discount: discount,
+                    surcharge: surcharge
+                });
+                setNotification({ type: 'success', message: `¡Venta registrada! Ticket #${res.number}` });
+
                 setTimeout(() => {
-                    clearTicket();
-                    setLastSale(null);
-                    setNotification(null);
-                }, 1000);
-            }, 100);
-        } else {
-            setNotification({ type: 'error', message: res.error || 'Error al guardar.' });
-            setTimeout(() => setNotification(null), 3000);
-        }
+                    window.print();
+                    setTimeout(() => {
+                        clearTicket();
+                        setLastSale(null);
+                        setNotification(null);
+                    }, 1000);
+                }, 800); // Increased delay to ensure render
+            } else {
+                setNotification({ type: 'error', message: res.error || 'Error al guardar.' });
+                setTimeout(() => setNotification(null), 3000);
+
+                // Use setSessionClosed if error indicates closure
+                if (res.error && res.error.toLowerCase().includes('cerrada')) {
+                    setSessionClosed(true);
+                }
+            }
+        });
     };
 
     // Calculate optimistic total
@@ -239,17 +252,27 @@ export function TicketClient({ organization, userEmail, initialProducts = [], in
                     <div className="flex gap-4">
                         <button
                             onClick={clearTicket}
-                            className="btn bg-gray-600/20 text-gray-400 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 flex-1 h-14 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 rounded-lg"
+                            disabled={items.length === 0 || isPending}
+                            className="btn bg-gray-600/20 text-gray-400 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 flex-1 h-14 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span>🗑️</span>
                         </button>
 
                         <button
                             onClick={() => handlePresupuesto()}
-                            disabled={items.length === 0}
-                            className="btn bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 flex-[2] h-14 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 rounded-lg disabled:opacity-50"
+                            disabled={items.length === 0 || isPending}
+                            className="btn bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 flex-[2] h-14 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <span>📄</span> Presupuesto
+                            {isPending && saleType === 'PRESUPUESTO' ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Generando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>📄</span> Presupuesto
+                                </>
+                            )}
                         </button>
 
                         <button
@@ -257,7 +280,7 @@ export function TicketClient({ organization, userEmail, initialProducts = [], in
                                 setSaleType('TICKET');
                                 setShowCheckout(true);
                             }}
-                            disabled={items.length === 0}
+                            disabled={items.length === 0 || isPending}
                             className="btn bg-green-600 text-white hover:bg-green-500 flex-[3] h-14 font-black text-lg uppercase tracking-widest shadow-[0_0_20px_rgba(22,163,74,0.3)] hover:shadow-[0_0_30px_rgba(22,163,74,0.5)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                         >
                             <span>💸</span> COBRAR
@@ -289,6 +312,7 @@ export function TicketClient({ organization, userEmail, initialProducts = [], in
                 onClose={() => setShowCheckout(false)}
                 onConfirm={handleCheckout}
                 total={optimisticTotal}
+                isLoading={isPending}
             />
 
             {/* Notification Toast (Simple implementation) */}

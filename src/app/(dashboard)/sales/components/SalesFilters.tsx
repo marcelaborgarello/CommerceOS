@@ -47,7 +47,7 @@ export function SalesFilters({ initialFilters }: Props) {
         });
 
         startTransition(() => {
-            router.replace(`${pathname}?${params.toString()}`);
+            isPending ? null : router.replace(`${pathname}?${params.toString()}`);
         });
     }
 

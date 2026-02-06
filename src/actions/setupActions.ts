@@ -46,7 +46,7 @@ export async function createOrganization(formData: FormData) {
 
     try {
         // Transaction to ensure everything is created or nothing is
-        const org = await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx) => {
 
             // 1. Create Organization
             const newOrg = await tx.organization.create({
@@ -77,7 +77,7 @@ export async function createOrganization(formData: FormData) {
             await tx.cashSession.create({
                 data: {
                     // Create session for YESTERDAY so today is free to open
-                    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+                    date: new Date(Date.now() - 86400000).toISOString().split('T')[0] as string,
                     status: 'CLOSED',
                     startCash: 0,
                     startDigital: 0,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PAYMENT_METHODS } from '@/types';
 import type { PaymentMethod } from '@/types';
 
@@ -9,13 +9,23 @@ interface CheckoutModalProps {
     onClose: () => void;
     onConfirm: (paymentMethod: PaymentMethod, discount: number, surcharge: number) => void;
     total: number;
+    isLoading?: boolean;
 }
 
-export function CheckoutModal({ isOpen, onClose, onConfirm, total }: CheckoutModalProps) {
+export function CheckoutModal({ isOpen, onClose, onConfirm, total, isLoading = false }: CheckoutModalProps) {
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('EFECTIVO');
     const [discount, setDiscount] = useState<string>('');
     const [discountType, setDiscountType] = useState<'AMOUNT' | 'PERCENT'>('AMOUNT');
     const [surcharge, setSurcharge] = useState<string>('');
+
+    // Reset default payment method when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedMethod('EFECTIVO');
+            setDiscount('');
+            setSurcharge('');
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -125,14 +135,23 @@ export function CheckoutModal({ isOpen, onClose, onConfirm, total }: CheckoutMod
                     <button
                         onClick={onClose}
                         className="btn-secondary flex-1 py-3"
+                        disabled={isLoading}
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleConfirm}
-                        className="btn flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-bold shadow-lg hover:shadow-green-500/20"
+                        disabled={isLoading}
+                        className="btn flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-bold shadow-lg hover:shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        ✅ CONFIRMAR
+                        {isLoading ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>PROCESANDO...</span>
+                            </>
+                        ) : (
+                            <span>✅ CONFIRMAR</span>
+                        )}
                     </button>
                 </div>
 

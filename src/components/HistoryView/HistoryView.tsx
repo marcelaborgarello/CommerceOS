@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CashAudit } from '@/generated/prisma/client';
-import { now } from '@/utils/dateUtils';
+
 
 // Components
 import { HistoryFilters } from './components/HistoryFilters';
@@ -71,7 +71,7 @@ export function HistoryView({ audits, initialYear }: Props) {
             </div>
 
             {/* Stats Cards */}
-            <HistoryStatsCards stats={stats} monthName={MONTHS[filters.selectedMonth]} />
+            <HistoryStatsCards stats={stats} monthName={MONTHS[filters.selectedMonth] || ''} />
 
             {/* Filters */}
             <HistoryFilters
@@ -89,7 +89,7 @@ export function HistoryView({ audits, initialYear }: Props) {
                     audits={filteredAudits}
                     selectedMonth={filters.selectedMonth}
                     selectedYear={filters.selectedYear}
-                    monthName={MONTHS[filters.selectedMonth]}
+                    monthName={MONTHS[filters.selectedMonth] || ''}
                 />
             ) : (
                 <HistoryList

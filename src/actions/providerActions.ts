@@ -2,8 +2,8 @@
 
 import prisma from '@/lib/db';
 import { withAuth } from '@/utils/withAuth'; // El guardia que creamos recién
-import type { Provider, CashSessionData, ProviderExpense } from '@/types';
-import { Prisma } from '@/generated/prisma/client';
+import type { Provider } from '@/types';
+
 
 export type ProviderData = {
     id?: string;
@@ -69,25 +69,25 @@ export async function deleteProvider(id: string) {
 }
 
 // 4. HISTORIAL DE GASTOS POR PROVEEDOR
-export async function getProviderExpenses(providerId: string, auditId?: string) {
+export async function getProviderExpenses(auditId?: string) {
     return withAuth(async (orgId) => {
         // Acá podrías incluso validar que el providerId pertenezca a la orgId
         // pero por ahora vamos con la lógica que tenías protegida por withAuth
 
-        let audits = [];
+
         if (auditId) {
-            const audit = await prisma.cashAudit.findFirst({
+            await prisma.cashAudit.findFirst({
                 where: { id: auditId, organizationId: orgId }
             });
-            audits = audit ? [audit] : [];
+
         } else {
-            audits = await prisma.cashAudit.findMany({
+            await prisma.cashAudit.findMany({
                 where: { organizationId: orgId },
                 orderBy: { date: 'desc' }
             });
         }
 
-        const activeSessions = await prisma.cashSession.findMany({
+        await prisma.cashSession.findMany({
             where: { organizationId: orgId, status: 'OPEN' }
         });
 

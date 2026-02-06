@@ -1,6 +1,3 @@
-import { getRequiredAuth } from '@/utils/serverContext';
-import { SupplyManager } from '@/components/SupplyManager';
-import { redirect } from 'next/navigation';
 import { getSupplies } from '@/actions/supplyActions';
 import type { Supply, Provider } from '@/types';
 import { SupplyManagerWrapper } from './SupplyManagerWrapper';
@@ -9,7 +6,6 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export default async function InsumosPage() {
-    const { org } = await getRequiredAuth();
 
     // Fetch Supplies
     let supplies: Supply[] = [];

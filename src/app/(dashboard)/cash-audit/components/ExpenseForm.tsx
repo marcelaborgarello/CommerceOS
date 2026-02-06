@@ -1,9 +1,10 @@
 'use client';
 
 import { useRef, useTransition } from 'react';
-import type { ExpenseCategory, Provider } from '@/types/index';
 import { EXPENSE_CATEGORIES } from '@/types/index';
 import { submitGasto } from '@/actions/formActions';
+import type { Provider } from '@/types';
+
 
 interface Props {
     sessionDate: string;

@@ -1,12 +1,19 @@
 'use server';
 
+// TODO: Fix TypeScript strict errors
+// - Remove unused imports
+// - Add null checks for split operations
+// - Type all function parameters
+
+
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/db';
 import { createClient } from '@/utils/supabase/server';
 import { generateArqueoExcel } from '@/lib/excel';
-import type { CashRegisterRecord, Sale, Expense, Transaction, PaymentMethod, ExpenseCategory } from '@/types';
+import type { CashRegisterRecord, PaymentMethod, ExpenseCategory } from '@/types';
 import { Prisma } from '@/generated/prisma/client';
+
 
 
 // --- HELPER: Smart Session Creation ---
@@ -111,17 +118,17 @@ const getArgentinaDate = () => {
     // 2. Parse manually "MM/DD/YYYY, HH:mm:ss" -> Date object in Local Machine Time (which is acceptable as we just want the numbers to match)
     // Actually, safer to build a UTC date with those specific numbers so DB saves exactly those numbers.
     const [datePart, timePart] = argentinaTimeStr.split(', ');
-    const [month, day, year] = datePart.split('/');
-    const [hour, minute, second] = timePart.split(':');
+    const [month, day, year] = datePart?.split('/') ?? [0, 0, 0];
+    const [hour, minute, second] = timePart?.split(':') ?? [0, 0, 0];
 
     // Construct Date as UTC with the Argentina values
     return new Date(Date.UTC(
-        parseInt(year),
-        parseInt(month) - 1,
-        parseInt(day),
-        parseInt(hour),
-        parseInt(minute),
-        parseInt(second)
+        parseInt(year as string),
+        parseInt(month as string) - 1,
+        parseInt(day as string),
+        parseInt(hour as string),
+        parseInt(minute as string),
+        parseInt(second as string)
     ));
 };
 
@@ -210,7 +217,7 @@ export async function getSession(date: string, organizationId?: string) {
             // 1. SALES: Purely from "Sale" table
             // FILTER: Not 'PRESUPUESTO' AND Not 'CANCELED'
             sales: session.sales
-                .filter(v => (v.type === 'TICKET' || v.type === 'FACTURA_A' || v.type === 'FACTURA_B' || v.type === 'FACTURA_C') && v.status !== 'CANCELED')
+                .filter(v => (v.type === 'TICKET' || v.type === 'FACTURA_A' || v.type === 'FACTURA_B' || v.type === 'FACTURA_C' || v.type === 'RAPIDA') && v.status !== 'CANCELED')
                 .map((v) => ({
                     id: v.id,
                     description: v.description,
@@ -547,7 +554,7 @@ export async function updateInicioCaja(sessionDate: string, field: 'startCash' |
 }
 
 // Deprecated or Used for Migration? This seems to be used for general sync, but we should rely on individual actions now.
-export async function updateSession(date: string, data: CashRegisterRecord) {
+export async function updateSession() {
     try {
         // Keep for legacy compatibility if needed
         return { success: true };
@@ -732,7 +739,7 @@ export async function closeSession(date: string, closeData: { realCash: number; 
                 const buffer = generateArqueoExcel(snapshotData, totalSalesGross, difference);
 
                 const fileName = `cierre-${date}-${Date.now()}.xlsx`;
-                const { data, error } = await supabase.storage
+                const { error } = await supabase.storage
                     .from('arqueos')
                     .upload(fileName, buffer, {
                         contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -853,7 +860,7 @@ export async function initNextDay(currentDate: string, organizationId?: string) 
 
         // 2. Calculate Next Day Date String (YYYY-MM-DD)
         const [y, m, d] = currentDate.split('-').map(Number);
-        const dateObj = new Date(y, m - 1, d);
+        const dateObj = new Date(y as number, m as number - 1, d as number);
         dateObj.setDate(dateObj.getDate() + 1); // Add 1 Day
 
         const nextDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;

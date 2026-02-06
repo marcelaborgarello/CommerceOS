@@ -2,7 +2,6 @@ import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/db';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { DeleteBusinessModal } from './components/DeleteBusinessModal';
 import { BusinessCard } from './components/BusinessCard'; // Extracting to component for interactivity if needed, usually inline is fine but client component needed for Modal
 
 

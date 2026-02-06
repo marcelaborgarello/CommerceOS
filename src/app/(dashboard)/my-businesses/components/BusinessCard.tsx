@@ -6,7 +6,6 @@ import { switchOrganization } from '@/actions/sessionActions';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import type { OrganizationSettings } from '@/types';
 import type { Organization } from '@/generated/prisma/client';
 
 interface BusinessCardProps {

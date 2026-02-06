@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { saveSupply, deleteSupply, type SupplyData } from '@/actions/supplyActions';
+import { saveSupply, deleteSupply } from '@/actions/supplyActions';
 import { Toast } from './Toast';
-import { useRouter } from 'next/navigation';
 import type { Supply, Provider } from '@/types';
 
 interface SupplyManagerProps {
@@ -12,7 +11,7 @@ interface SupplyManagerProps {
 }
 
 export const SupplyManager = ({ supplies, providers, isLoading, onRefresh }: SupplyManagerProps) => {
-    const router = useRouter();
+
     const [searchTerm, setSearchTerm] = useState('');
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
 

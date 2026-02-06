@@ -50,6 +50,7 @@ build/
 .antigravity
 .cursor
 .continue
+.skills
 
 # Build logs
 build_log*.txt

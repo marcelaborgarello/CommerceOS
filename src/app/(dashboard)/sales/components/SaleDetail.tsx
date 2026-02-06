@@ -140,7 +140,12 @@ export function SaleDetail({ sale, isOpen, onClose, organizationId }: Props) {
                                         disabled={isPending}
                                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-colors animate-in fade-in zoom-in duration-200"
                                     >
-                                        {isPending ? '...' : 'SÍ, ANULAR'}
+                                        {isPending ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span>...</span>
+                                            </div>
+                                        ) : 'SÍ, ANULAR'}
                                     </button>
                                     <button
                                         onClick={() => setConfirmStep('idle')}

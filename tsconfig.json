@@ -1,3 +1,5 @@
+//PROHIBIDO TOCAR ESTE ARCHIVO
+// tsconfig.json
 {
   "compilerOptions": {
     "target": "ES2022",
@@ -8,7 +10,21 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
+    // ⚡ MODO STRICT ACTIVADO
     "strict": true,
+    "noImplicitAny": true, // ← Prohibe any implícito
+    "strictNullChecks": true, // ← Prohibe null/undefined sin verificar
+    "strictFunctionTypes": true, // ← Tipos estrictos en funciones
+    "strictBindCallApply": true, // ← bind/call/apply tipados
+    "strictPropertyInitialization": true, // ← Propiedades deben inicializarse
+    "noImplicitThis": true, // ← `this` debe tener tipo explícito
+    "alwaysStrict": true, // ← 'use strict' en todos los archivos
+    // 🚨 REGLAS EXTRA ANTI-ANY
+    "noUncheckedIndexedAccess": true, // ← Arrays/objetos más seguros
+    "noImplicitReturns": true, // ← Todas las ramas deben retornar
+    "noFallthroughCasesInSwitch": true, // ← Switch cases completos
+    "noUnusedLocals": true, // ← Variables sin usar = error
+    "noUnusedParameters": true, // ← Parámetros sin usar = error
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",

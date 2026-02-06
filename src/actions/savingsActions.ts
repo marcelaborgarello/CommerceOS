@@ -1,5 +1,11 @@
 'use server';
 
+// TODO: Fix TypeScript strict errors
+// - Remove unused imports
+// - Add null checks for split operations
+// - Type all function parameters
+
+
 import prisma from '@/lib/db';
 import { getSession, getLatestSession } from './cashActions';
 import { revalidatePath } from 'next/cache';

@@ -1,5 +1,10 @@
 'use server';
 
+// TODO: Fix TypeScript strict errors
+// - Remove unused imports
+// - Add null checks for split operations
+// - Type all function parameters
+
 import prisma from '@/lib/db';
 import type { CashRegisterRecord, Expense } from '@/types';
 import { cookies } from 'next/headers';

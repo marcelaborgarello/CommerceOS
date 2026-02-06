@@ -1,5 +1,10 @@
 'use server';
 
+// TODO: Fix TypeScript strict errors
+// - Remove unused imports
+// - Add null checks for split operations
+// - Type all function parameters
+
 import prisma from '@/lib/db';
 
 export interface ProductData {
@@ -17,7 +22,6 @@ export interface ProductData {
     productType?: string;
 }
 
-import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
 import type { Product } from '@/types';

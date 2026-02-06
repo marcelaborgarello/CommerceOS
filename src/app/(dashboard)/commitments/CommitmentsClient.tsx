@@ -20,7 +20,6 @@ interface CommitmentsClientProps {
 }
 
 export function CommitmentsClient({
-    organization,
     initialCompromisos = [],
     initialProviders = []
 }: CommitmentsClientProps) {
@@ -102,7 +101,7 @@ export function CommitmentsClient({
         setEditingItem({
             description: item.description,
             amount: item.amount.toString(),
-            dueDate: typeof item.dueDate === 'string' ? item.dueDate.split('T')[0] : new Date(item.dueDate).toISOString().split('T')[0],
+            dueDate: typeof item.dueDate === 'string' ? item.dueDate.split('T')[0] as string : new Date(item.dueDate).toISOString().split('T')[0] as string,
             providerId: item.providerId || '',
             notes: item.notes || ''
         });

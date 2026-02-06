@@ -42,9 +42,9 @@ export const BillCounter: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => 
                         <div key={den} className="flex-row items-center justify-between bg-white bg-opacity-5 p-2 rounded-lg border border-white border-opacity-0 hover:border-opacity-10 transition-all">
                             <div className="flex-col">
                                 <span className="font-bold text-sm text-secondary">${den.toLocaleString()}</span>
-                                {counts[den] > 0 && (
+                                {(counts[den] || 0) > 0 && (
                                     <span className="text-[10px] text-green font-mono">
-                                        = ${(counts[den] * den).toLocaleString('es-AR')}
+                                        = ${(counts[den] || 0 * den).toLocaleString('es-AR')}
                                     </span>
                                 )}
                             </div>
@@ -59,7 +59,7 @@ export const BillCounter: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => 
                                         width: '50px',
                                         height: '32px',
                                         background: 'rgba(0,0,0,0.3)',
-                                        border: counts[den] > 0 ? '1px solid var(--accent-color)' : '1px solid transparent'
+                                        border: counts[den]! > 0 ? '1px solid var(--accent-color)' : '1px solid transparent'
                                     }}
                                     value={counts[den] || ''}
                                     onChange={e => handleCountChange(den, e.target.value)}

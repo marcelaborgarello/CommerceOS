@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+
 import { getSales } from '@/actions/saleActions';
 import { getCurrentOrganization } from '@/utils/serverContext';
 import { createClient } from '@/utils/supabase/server';
@@ -39,7 +39,7 @@ export default async function SalesPage({ searchParams }: PageProps) {
     const startDate = params.startDate;
     const endDate = params.endDate;
 
-    const { success, data, pagination, error } = await getSales(org.id, {
+    const { data, pagination, error } = await getSales(org.id, {
         page,
         limit,
         search,

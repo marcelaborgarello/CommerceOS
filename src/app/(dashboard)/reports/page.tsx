@@ -24,18 +24,11 @@ export default async function ReportsPage({ searchParams }: Props) {
     const month = params.month ? parseInt(params.month) : currentMonth;
     const year = params.year ? parseInt(params.year) : currentYear;
 
-    let orgProps = {};
+
     let org = null;
     if (user) {
         org = await getCurrentOrganization(user);
-        if (org) {
-            orgProps = {
-                organizationName: org.name,
-                organizationType: org.type,
-                logoUrl: org.logoUrl,
-                userEmail: user.email
-            };
-        }
+
     }
 
     return (

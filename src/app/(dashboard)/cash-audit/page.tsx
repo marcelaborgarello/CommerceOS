@@ -39,7 +39,7 @@ export default async function ArqueoPage() {
     // Moved helper up to avoid ReferenceError
     const formatDate = (dateString: string) => {
         const [y, m, d] = dateString.split('-');
-        return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('es-AR', {
+        return new Date(parseInt(y as string), parseInt(m as string) - 1, parseInt(d as string)).toLocaleDateString('es-AR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',

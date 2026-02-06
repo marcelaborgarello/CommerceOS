@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import type { Sale, SaleItem } from '@/types'; // Need to update types potentially
 import { useRouter } from 'next/navigation';
 import { SaleDetail } from './SaleDetail';
 

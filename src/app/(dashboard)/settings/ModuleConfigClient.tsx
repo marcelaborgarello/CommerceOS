@@ -132,7 +132,7 @@ export function ModuleConfigClient({ initialFeatures }: Props) {
         if (!acc[module.category]) {
             acc[module.category] = [];
         }
-        acc[module.category].push(module);
+        acc[module.category]?.push(module);
         return acc;
     }, {} as Record<string, ModuleConfig[]>);
 

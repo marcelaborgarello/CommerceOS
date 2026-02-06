@@ -38,7 +38,7 @@ export async function uploadReport(formData: FormData) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const supabase = await createClient();
 
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
             .from('arqueos')
             .upload(fileName, buffer, {
                 contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -139,7 +139,7 @@ import { generateArqueoExcel } from '@/lib/excel';
 async function uploadReportBuffer(fileName: string, buffer: Buffer) {
     try {
         const supabase = await createClient();
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
             .from('arqueos')
             .upload(fileName, buffer, {
                 contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

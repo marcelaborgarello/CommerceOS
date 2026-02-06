@@ -163,7 +163,7 @@ export async function uploadLogo(formData: FormData) {
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const buffer = Buffer.from(await file.arrayBuffer());
 
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
             .from('logos')
             .upload(fileName, buffer, {
                 contentType: file.type,

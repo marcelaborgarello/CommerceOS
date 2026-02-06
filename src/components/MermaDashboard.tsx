@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { getWastage, deleteWastage } from '@/actions/mermaActions';
 
 interface Merma {
@@ -16,6 +16,7 @@ export function MermaDashboard() {
     const [mermas, setMermas] = useState<Merma[]>([]);
     const [loading, setLoading] = useState(true);
     const [range, setRange] = useState<'week' | 'month'>('week');
+    const [isPending, startTransition] = useTransition();
 
     // Delete Modal
     const [mermaToDelete, setMermaToDelete] = useState<Merma | null>(null);
@@ -37,11 +38,18 @@ export function MermaDashboard() {
         setMermaToDelete(merma);
     };
 
-    const confirmDelete = async () => {
+    const confirmDelete = () => {
         if (!mermaToDelete) return;
-        await deleteWastage(mermaToDelete.id);
-        setMermaToDelete(null);
-        loadMermas();
+
+        startTransition(async () => {
+            const res = await deleteWastage(mermaToDelete.id);
+            if (res.success) {
+                setMermaToDelete(null);
+                loadMermas(); // Re-fetch
+            } else {
+                alert('Error al eliminar merma'); // Fallback if no toast
+            }
+        });
     };
 
     const totalPerdida = mermas.reduce((sum, m) => sum + (m.quantity * m.unitCost), 0);
@@ -49,8 +57,7 @@ export function MermaDashboard() {
 
     // Agrupar por producto para el gráfico
     const chartData = mermas.reduce((acc, m) => {
-        if (!acc[m.productName]) acc[m.productName] = 0;
-        acc[m.productName] += (m.quantity * m.unitCost);
+        acc[m.productName] = (acc[m.productName] || 0) + (m.quantity * m.unitCost);
         return acc;
     }, {} as Record<string, number>);
 
@@ -101,7 +108,7 @@ export function MermaDashboard() {
                 <div className="glass-panel">
                     <h3 className="text-xs uppercase text-secondary font-bold mb-4">Top Pérdidas por Producto</h3>
                     <div className="flex flex-col gap-3">
-                        {sortedProducts.map(([name, value], i) => (
+                        {sortedProducts.map(([name, value]) => (
                             <div key={name} className="flex flex-col gap-1">
                                 <div className="flex justify-between text-xs">
                                     <span className="font-bold text-white">{name}</span>
@@ -132,32 +139,42 @@ export function MermaDashboard() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {mermas.map(m => (
-                            <tr key={m.id} className="hover:bg-white/5 transition-colors">
-                                <td className="p-3 text-secondary text-xs">
-                                    {new Date(m.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
-                                </td>
-                                <td className="p-3 font-medium">{m.productName}</td>
-                                <td className="p-3 text-right">{m.quantity}</td>
-                                <td className="p-3 text-right text-red font-bold">
-                                    ${(m.quantity * m.unitCost).toLocaleString('es-AR', { maximumFractionDigits: 0 })}
-                                </td>
-                                <td className="p-3 text-right">
-                                    <button
-                                        onClick={() => handleDeleteClick(m)}
-                                        className="text-white/40 hover:text-red transition-colors"
-                                    >
-                                        🗑️
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        {mermas.length === 0 && (
+                        {loading ? (
                             <tr>
-                                <td colSpan={5} className="p-8 text-center text-secondary">
-                                    No hay mermas registradas en este período. ¡Bien ahí! 🎉
+                                <td colSpan={5} className="p-8 text-center text-secondary animate-pulse">
+                                    Cargando movimientos...
                                 </td>
                             </tr>
+                        ) : (
+                            <>
+                                {mermas.map(m => (
+                                    <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                                        <td className="p-3 text-secondary text-xs">
+                                            {new Date(m.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                                        </td>
+                                        <td className="p-3 font-medium">{m.productName}</td>
+                                        <td className="p-3 text-right">{m.quantity}</td>
+                                        <td className="p-3 text-right text-red font-bold">
+                                            ${(m.quantity * m.unitCost).toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                                        </td>
+                                        <td className="p-3 text-right">
+                                            <button
+                                                onClick={() => handleDeleteClick(m)}
+                                                className="text-white/40 hover:text-red transition-colors"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {mermas.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="p-8 text-center text-secondary">
+                                            No hay mermas registradas en este período. ¡Bien ahí! 🎉
+                                        </td>
+                                    </tr>
+                                )}
+                            </>
                         )}
                     </tbody>
                 </table>
@@ -173,7 +190,7 @@ export function MermaDashboard() {
                         </p>
 
                         <div className="flex gap-3 mt-4">
-                            <button onClick={confirmDelete} className="btn bg-red hover:bg-red/80 w-full py-3">Sí, Eliminar</button>
+                            <button onClick={confirmDelete} disabled={isPending} className="btn bg-red hover:bg-red/80 w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? 'Eliminando...' : 'Sí, Eliminar'}</button>
                             <button onClick={() => setMermaToDelete(null)} className="btn-secondary w-full">Cancelar</button>
                         </div>
                     </div>

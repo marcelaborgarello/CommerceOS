@@ -1,7 +1,12 @@
 'use server';
 
+// TODO: Fix TypeScript strict errors
+// - Remove unused imports
+// - Add null checks for split operations
+// - Type all function parameters
+
+
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db';
 import { createClient } from '@/utils/supabase/server';

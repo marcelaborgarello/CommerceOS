@@ -1,6 +1,11 @@
 'use server';
 
-import { createVenta, createGasto, createIngreso, deleteVenta, deleteGasto, deleteIngreso, updateSession } from '@/actions/cashActions';
+// TODO: Fix TypeScript strict errors
+// - Remove unused imports
+// - Add null checks for split operations
+// - Type all function parameters
+
+import { createVenta, createGasto, createIngreso, deleteVenta, deleteGasto, deleteIngreso } from '@/actions/cashActions';
 import { revalidatePath } from 'next/cache';
 
 // --- SALES ---
@@ -85,12 +90,7 @@ export async function deleteIngresoAction(formData: FormData) {
 }
 
 // --- CLOSING ---
-export async function closeSessionAction(
-    sessionDate: string,
-    realEfectivo: number,
-    realMP: number,
-    observaciones: string
-) {
+export async function closeSessionAction() {
     try {
         // Construct the "Arqueo" object to update inside the session
         // Note: updateSession expects the FULL RegistroCaja object, 

@@ -14,7 +14,8 @@ interface HeaderProps {
     userEmail?: string;
 }
 
-export const Header = ({ title, subtitle, organizationName, organizationType, logoUrl, userEmail }: HeaderProps) => {
+export const Header = ({
+    subtitle, organizationName, organizationType, logoUrl, userEmail }: HeaderProps) => {
     // Format Current Date
     const defaultSubtitle = new Date().toLocaleDateString('es-AR', {
         weekday: 'long',

@@ -61,7 +61,6 @@ export default async function ProductsPage() {
 
     // --- Server Side Data Fetching & Filtering ---
     let initialProducts: Product[] = [];
-    let initialSupplies: Product[] = [];
 
     try {
         const { getProducts } = await import('@/actions/productActions');
@@ -70,7 +69,7 @@ export default async function ProductsPage() {
             const allItems = res.data;
             // Filter logic moved from Client to Server
             initialProducts = allItems.filter(p => !p.productType || p.productType === 'SELL' || p.productType === 'BOTH');
-            initialSupplies = allItems.filter(p => p.productType === 'SUPPLY');
+
         }
     } catch (e) {
         console.error("Error fetching products server side:", e);

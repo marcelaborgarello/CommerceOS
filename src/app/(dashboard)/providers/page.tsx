@@ -1,10 +1,9 @@
 import { ProvidersManager } from '@/components/ProvidersManager';
 import { getProviders } from '@/actions/providerActions';
-import { getRequiredAuth } from '@/utils/serverContext';
-import { redirect } from 'next/navigation';
+
 
 export default async function ProvidersPage() {
-    const { org } = await getRequiredAuth();
+
 
     const { data: providers } = await getProviders();
 

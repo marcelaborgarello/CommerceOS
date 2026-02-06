@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { getReservaBalance, addReservaTransaction } from '@/actions/savingsActions';
-import { getProviders } from '@/actions/cashActions';
 import { Toast } from '@/components/Toast';
 import type { Organization, Provider } from '@/types';
 
@@ -14,10 +13,8 @@ interface SavingsClientProps {
 }
 
 export function SavingsClient({
-    organization,
     initialCashBalance = 0,
     initialBankBalance = 0,
-    initialProviders = []
 }: SavingsClientProps) {
     // "activeTab" can be null for Dashboard View
     const [activeTab, setActiveTab] = useState<'CASH' | 'BANK' | null>(null);
@@ -27,8 +24,7 @@ export function SavingsClient({
     const [cashBalance, setCashBalance] = useState(initialCashBalance);
     const [bankBalance, setBankBalance] = useState(initialBankBalance);
 
-    // Data & Lists
-    const [providers, setProviders] = useState<Provider[]>(initialProviders);
+
 
     // Forms
     const [amount, setAmount] = useState('');

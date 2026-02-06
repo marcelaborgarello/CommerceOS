@@ -5,7 +5,7 @@ interface Props {
     monthName: string;
 }
 
-export function HistoryStatsCards({ stats, monthName }: Props) {
+export function HistoryStatsCards({ stats }: Props) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
             {/* Sales Card */}

@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { saveProduct, deleteProduct, getProductHistory, type ProductData } from '@/actions/productActions';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { useState, useTransition } from 'react';
+import { saveProduct, deleteProduct, getProductHistory } from '@/actions/productActions';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { createMerma } from '@/actions/mermaActions';
 import { Toast } from './Toast';
-import { useRouter } from 'next/navigation';
 import type { Product, HistoricalPrice } from '@/types';
 
 interface ProductManagerProps {
@@ -29,7 +28,7 @@ interface ProductFormData {
 }
 
 export const ProductManager = ({ products, isLoading, onRefresh, defaultType = 'SELL' }: ProductManagerProps) => {
-    const router = useRouter();
+
     const [searchTerm, setSearchTerm] = useState('');
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -85,22 +84,29 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
         setIsMermaModalOpen(true);
     };
 
-    const handleSaveMerma = async () => {
+    const [isPending, startTransition] = useTransition();
+
+    // ... (existing state) ...
+
+    const handleSaveMerma = () => {
         if (!selectedProductForMerma || !mermaQuantity) return;
         const cost = selectedProductForMerma.unitCost || (selectedProductForMerma.wholesaleCost / selectedProductForMerma.wholesaleQuantity);
-        const res = await createMerma({
-            productId: selectedProductForMerma.id,
-            productName: selectedProductForMerma.name,
-            quantity: parseFloat(mermaQuantity),
-            costPerUnit: cost,
-            reason: 'Descarte Manual'
+
+        startTransition(async () => {
+            const res = await createMerma({
+                productId: selectedProductForMerma.id,
+                productName: selectedProductForMerma.name,
+                quantity: parseFloat(mermaQuantity),
+                costPerUnit: cost,
+                reason: 'Descarte Manual'
+            });
+            if (res.success) {
+                setToast({ message: 'Merma registrada (Pérdida calculada)', type: 'success' });
+                setIsMermaModalOpen(false);
+            } else {
+                setToast({ message: 'Error al registrar merma', type: 'error' });
+            }
         });
-        if (res.success) {
-            setToast({ message: 'Merma registrada (Pérdida calculada)', type: 'success' });
-            setIsMermaModalOpen(false);
-        } else {
-            setToast({ message: 'Error al registrar merma', type: 'error' });
-        }
     };
 
     // Calculated fields
@@ -147,7 +153,7 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
         setIsModalOpen(true);
     };
 
-    const renderVariation = (current: number, previous: number | null | undefined, type: 'cost' | 'price') => {
+    const renderVariation = (current: number, previous: number | null | undefined) => {
         if (!previous || previous === 0) return null;
         if (current === previous) return null;
         const diff = current - previous;
@@ -162,30 +168,33 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
         );
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!formData.name.trim()) {
             setToast({ message: 'El nombre es obligatorio', type: 'error' });
             return;
         }
-        const res = await saveProduct({
-            ...formData,
-            wholesaleCost: parseFloat(formData.wholesaleCost) || 0,
-            wholesaleQuantity: parseFloat(formData.wholesaleQuantity) || 1,
-            margin: parseFloat(formData.margin) || 0,
-            finalPrice: parseFloat(formData.finalPrice) || 0,
-            isOnSale: formData.isOnSale,
-            stock: parseFloat(formData.stock) || 0,
-            minStock: parseFloat(formData.minStock) || 0,
-            productType: defaultType,
-            id: editingId || undefined
+
+        startTransition(async () => {
+            const res = await saveProduct({
+                ...formData,
+                wholesaleCost: parseFloat(formData.wholesaleCost) || 0,
+                wholesaleQuantity: parseFloat(formData.wholesaleQuantity) || 1,
+                margin: parseFloat(formData.margin) || 0,
+                finalPrice: parseFloat(formData.finalPrice) || 0,
+                isOnSale: formData.isOnSale,
+                stock: parseFloat(formData.stock) || 0,
+                minStock: parseFloat(formData.minStock) || 0,
+                productType: defaultType,
+                id: editingId || undefined
+            });
+            if (res.success) {
+                setToast({ message: 'Producto guardado', type: 'success' });
+                setIsModalOpen(false);
+                onRefresh();
+            } else {
+                setToast({ message: 'Error al guardar', type: 'error' });
+            }
         });
-        if (res.success) {
-            setToast({ message: 'Producto guardado', type: 'success' });
-            setIsModalOpen(false);
-            onRefresh();
-        } else {
-            setToast({ message: 'Error al guardar', type: 'error' });
-        }
     };
 
     const handleDeleteClick = (product: Product) => {
@@ -193,17 +202,20 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
         setIsDeleteModalOpen(true);
     };
 
-    const confirmDelete = async () => {
+    const confirmDelete = () => {
         if (!productToDelete) return;
-        const res = await deleteProduct(productToDelete.id);
-        if (res.success) {
-            setToast({ message: 'Producto eliminado', type: 'success' });
-            setIsDeleteModalOpen(false);
-            setProductToDelete(null);
-            onRefresh();
-        } else {
-            setToast({ message: 'Error al eliminar', type: 'error' });
-        }
+
+        startTransition(async () => {
+            const res = await deleteProduct(productToDelete.id);
+            if (res.success) {
+                setToast({ message: 'Producto eliminado', type: 'success' });
+                setIsDeleteModalOpen(false);
+                setProductToDelete(null);
+                onRefresh();
+            } else {
+                setToast({ message: 'Error al eliminar', type: 'error' });
+            }
+        });
     };
 
     const filteredProducts = products
@@ -265,10 +277,10 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                                     {/* STOCK COLUMN */}
                                     <td className="p-4 text-center hidden md:table-cell print:hidden">
                                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${(p.stock || 0) > (p.minStock || 0)
-                                                ? 'bg-green-900/40 text-green-400 border border-green-700/50'
-                                                : (p.stock || 0) === 0
-                                                    ? 'bg-yellow-900/40 text-yellow-400 border border-yellow-700/50'
-                                                    : 'bg-red-900/40 text-red-400 border border-red-700/50'
+                                            ? 'bg-green-900/40 text-green-400 border border-green-700/50'
+                                            : (p.stock || 0) === 0
+                                                ? 'bg-yellow-900/40 text-yellow-400 border border-yellow-700/50'
+                                                : 'bg-red-900/40 text-red-400 border border-red-700/50'
                                             }`}>
                                             {p.stock || 0} {p.unit}
                                         </span>
@@ -328,7 +340,7 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                             No podrás deshacer esta acción.
                         </p>
                         <div className="flex gap-3 mt-4">
-                            <button onClick={confirmDelete} className="btn bg-red hover:bg-red/80 w-full py-3">Sí, Eliminar</button>
+                            <button onClick={confirmDelete} disabled={isPending} className="btn bg-red hover:bg-red/80 w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? 'Eliminando...' : 'Sí, Eliminar'}</button>
                             <button onClick={() => setIsDeleteModalOpen(false)} className="btn-secondary w-full">Cancelar</button>
                         </div>
                     </div>
@@ -466,7 +478,7 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                                         />
                                     </div>
                                 </div>
-                                {renderVariation(parseFloat(formData.wholesaleCost) || 0, editingId ? products.find(p => p.id === editingId)?.lastCost || products.find(p => p.id === editingId)?.wholesaleCost : null, 'cost')}
+                                {renderVariation(parseFloat(formData.wholesaleCost) || 0, editingId ? products.find(p => p.id === editingId)?.lastCost || products.find(p => p.id === editingId)?.wholesaleCost : null)}
                             </div>
                             <div className="flex-col gap-3">
                                 <label className="text-xs text-secondary font-semibold ml-1">Cantidad por Referencia</label>
@@ -539,7 +551,7 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                                             />
                                         </div>
                                         {/* Variation for Price */}
-                                        {renderVariation(parseFloat(formData.finalPrice) || 0, editingId ? products.find(p => p.id === editingId)?.lastPrice || products.find(p => p.id === editingId)?.finalPrice : null, 'price')}
+                                        {renderVariation(parseFloat(formData.finalPrice) || 0, editingId ? products.find(p => p.id === editingId)?.lastPrice || products.find(p => p.id === editingId)?.finalPrice : null)}
                                     </div>
                                 </div>
 
@@ -560,8 +572,8 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                         )}
 
                         <div className="flex gap-4 pt-4 border-t border-white/10">
-                            <button onClick={handleSave} className="btn bg-green-500 hover:bg-green-400 text-black font-bold text-lg flex-1 py-4 uppercase tracking-wider shadow-xl shadow-green-500/10">
-                                Guardar {defaultType === 'SUPPLY' ? 'Insumo' : 'Producto'}
+                            <button onClick={handleSave} disabled={isPending} className="btn bg-green-500 hover:bg-green-400 text-black font-bold text-lg flex-1 py-4 uppercase tracking-wider shadow-xl shadow-green-500/10 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {isPending ? 'Guardando...' : `Guardar ${defaultType === 'SUPPLY' ? 'Insumo' : 'Producto'}`}
                             </button>
                             <button onClick={() => setIsModalOpen(false)} className="btn-secondary px-8 py-4">
                                 Cancelar
@@ -614,7 +626,7 @@ export const ProductManager = ({ products, isLoading, onRefresh, defaultType = '
                         </div>
 
                         <div className="flex gap-3 mt-2">
-                            <button onClick={handleSaveMerma} className="btn bg-red hover:bg-red/80 w-full py-3">Confirmar Descarte</button>
+                            <button onClick={handleSaveMerma} disabled={isPending} className="btn bg-red hover:bg-red/80 w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed">{isPending ? 'Confirmando...' : 'Confirmar Descarte'}</button>
                             <button onClick={() => setIsMermaModalOpen(false)} className="btn-secondary w-full">Cancelar</button>
                         </div>
                     </div>

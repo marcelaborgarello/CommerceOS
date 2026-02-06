@@ -56,7 +56,7 @@ export function TicketProductSearch({ products, onAddItem }: TicketProductSearch
         } else if (e.key === 'Enter') {
             e.preventDefault();
             if (searchResults.length > 0) {
-                selectProduct(searchResults[highlightedIndex]);
+                selectProduct(searchResults[highlightedIndex] as POSProduct);
             }
         } else if (e.key === 'Escape') {
             e.preventDefault();
